@@ -9,7 +9,8 @@ metadata:
 spec:
   authServerSelector:
     matchLabels:
-      name: #@ data.values.auth_server_name
+      name: my-first-auth-server
+      env: tutorial
   clientAuthenticationMethod: basic
   authorizationGrantTypes:
     - authorization_code

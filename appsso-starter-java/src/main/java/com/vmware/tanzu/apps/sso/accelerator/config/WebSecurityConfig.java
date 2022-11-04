@@ -31,9 +31,10 @@ public class WebSecurityConfig {
 								.anyRequest().authenticated()
 				)
 				// After a successful logout, redirect to /home.
-				.logout().logoutSuccessHandler(oidcLogoutSuccessHandler()).logoutSuccessUrl("/home")
-				.and()
+//				.logout().logoutSuccessHandler(oidcLogoutSuccessHandler()).logoutSuccessUrl("/home")
+//				.and()
 				.oauth2Login(withDefaults())
+				.logout(logout -> logout.logoutSuccessHandler(oidcLogoutSuccessHandler()))
 				.oauth2Client(withDefaults());
 		return http.build();
 	}
