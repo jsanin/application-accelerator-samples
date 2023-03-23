@@ -21,3 +21,7 @@ server:
     key-store-password: s3cure
     # The alias mapped to the certificate
     key-alias: secure-server-workloads
+
+#HTTP port
+http:
+  port: 8080
