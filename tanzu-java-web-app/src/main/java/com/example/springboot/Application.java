@@ -17,8 +17,8 @@ import org.springframework.boot.actuate.trace.http.InMemoryHttpTraceRepository;
 @SpringBootApplication
 public class Application {
 	//HTTP port
-	@Value("${http.port}")
-	private int httpPort;
+	// @Value("${http.port}")
+	// private int httpPort;
 	public static void main(String[] args) {
 		SpringApplication.run(Application.class, args);
 	}
@@ -43,17 +43,17 @@ public class Application {
 		return new InMemoryHttpTraceRepository();
 	}
 
-	// Let's configure additional connector to enable support for both HTTP and HTTPS
-	@Bean
-	public ServletWebServerFactory servletContainer() {
-		TomcatServletWebServerFactory tomcat = new TomcatServletWebServerFactory();
-		tomcat.addAdditionalTomcatConnectors(createStandardConnector());
-		return tomcat;
-	}
+	// // Let's configure additional connector to enable support for both HTTP and HTTPS
+	// @Bean
+	// public ServletWebServerFactory servletContainer() {
+	// 	TomcatServletWebServerFactory tomcat = new TomcatServletWebServerFactory();
+	// 	tomcat.addAdditionalTomcatConnectors(createStandardConnector());
+	// 	return tomcat;
+	// }
 
-	private Connector createStandardConnector() {
-		Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
-		connector.setPort(httpPort);
-		return connector;
-	}
+	// private Connector createStandardConnector() {
+	// 	Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
+	// 	connector.setPort(httpPort);
+	// 	return connector;
+	// }
 }
