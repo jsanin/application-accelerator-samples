@@ -1,0 +1,31 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: secure-server-wrkld
+  annotations:
+    cert-manager.io/cluster-issuer: tap-ingress-selfsigned
+    ingress.kubernetes.io/force-ssl-redirect: "true"
+    kubernetes.io/ingress.class: contour
+    kubernetes.io/tls-acme: "true"
+    kapp.k14s.io/change-rule: "upsert after upserting Services"
+  labels:
+    apps.tanzu.vmware.com/workload-type: server
+    app.kubernetes.io/component: run
+    carto.run/workload-name: secure-server-wrkld
+spec:
+  tls:
+    - secretName: secure-server-wrkld
+      hosts:
+        - "secure-server-wrkld.jsanin.tanzu.biz"
+  rules:
+    - host: "secure-server-wrkld.jsanin.tanzu.biz"
+      http:
+        paths:
+          - pathType: Prefix
+            path: /
+            backend:
+              service:
+                name: secure-server-wrkld
+                port:
+                  number: 8443

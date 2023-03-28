@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: java-app-keystore-password
+  namespace: default
+data:
+  password: cGFzc3dvcmQxMjM= # "password123"
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: certificate-for-java-app
+  namespace: default
+spec:
+  commonName: secure-server-wrkld
+  dnsNames:
+    - secure-server-wrkld
+    - test.domain.com
+  secretName: secure-server-wrkld-from-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  keystores:
+    pkcs12:
+      create: true
+      passwordSecretRef:
+        name: java-app-keystore-password
+        key: password
+  issuerRef:
+    name: my-ca-issuer
+    kind: Issuer
+    group: cert-manager.io

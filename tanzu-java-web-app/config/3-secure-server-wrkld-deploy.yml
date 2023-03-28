@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kapp.k14s.io/change-rule: upsert after upserting servicebinding.io/ServiceBindings
+    kapp.k14s.io/update-strategy: fallback-on-replace
+    ootb.apps.tanzu.vmware.com/servicebinding-workload: "true"
+  labels:
+    app.kubernetes.io/component: run
+    apps.tanzu.vmware.com/workload-type: server
+    carto.run/workload-name: secure-server-wrkld
+  name: secure-server-wrkld
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: run
+      apps.tanzu.vmware.com/auto-configure-actuators: "false"
+      apps.tanzu.vmware.com/workload-type: server
+      carto.run/workload-name: secure-server-wrkld
+      conventions.carto.run/framework: spring-boot
+      tanzu.app.live.view: "true"
+      tanzu.app.live.view.application.actuator.path: actuator
+      tanzu.app.live.view.application.actuator.port: "8080"
+      tanzu.app.live.view.application.flavours: spring-boot
+      tanzu.app.live.view.application.name: secure-server-wrkld
+  template:
+    metadata:
+      annotations:
+        boot.spring.io/version: 2.7.8
+        conventions.carto.run/applied-conventions: |-
+          appliveview-sample/app-live-view-appflavour-check
+          spring-boot-convention/auto-configure-actuators-check
+          spring-boot-convention/spring-boot
+          spring-boot-convention/spring-boot-graceful-shutdown
+          spring-boot-convention/spring-boot-web
+          spring-boot-convention/spring-boot-actuator
+          spring-boot-convention/spring-boot-actuator-probes
+          spring-boot-convention/app-live-view-appflavour-check
+          spring-boot-convention/app-live-view-connector-boot
+          spring-boot-convention/app-live-view-appflavours-boot
+        developer.conventions/target-containers: workload
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/component: run
+        apps.tanzu.vmware.com/auto-configure-actuators: "false"
+        apps.tanzu.vmware.com/workload-type: server
+        carto.run/workload-name: secure-server-wrkld
+        conventions.carto.run/framework: spring-boot
+        tanzu.app.live.view: "true"
+        tanzu.app.live.view.application.actuator.path: actuator
+        tanzu.app.live.view.application.actuator.port: "8080"
+        tanzu.app.live.view.application.flavours: spring-boot
+        tanzu.app.live.view.application.name: secure-server-wrkld
+    spec:
+      volumes:
+        - name: secret-volume
+          secret:
+            secretName: secure-server-wrkld-from-ca
+            items:
+              - key: keystore.p12
+                path: keystore.p12
+      containers:
+      - env:
+        - name: JAVA_TOOL_OPTIONS
+          value: -Dmanagement.endpoint.health.probes.add-additional-paths="true" -Dmanagement.health.probes.enabled="true"
+            -Dserver.port="8443" -Dserver.shutdown.grace-period="24s" -Dserver.ssl.key-store="classpath:keystore/keystore.p12" -Dserver.ssl.key-store-password="password123" -Dserver.ssl.key-alias="1"
+        image: dev.registry.tanzu.vmware.com/serverless/jsanin/supply-chain/tanzu-java-web-app-https-default@sha256:f6c28d2816b6a064b95da1745dde79ff87e609eef35e0d2dfe16b0abc317c519
+        volumeMounts:
+          - name: secret-volume
+            readOnly: true
+            mountPath: "/workspace/BOOT-INF/classes/keystore"
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /livez
+            port: 8443
+            scheme: HTTPS
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: workload
+        ports:
+        - containerPort: 8443
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: 8443
+            scheme: HTTPS
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1500Mi
+          requests:
+            cpu: 500m
+            memory: 250Mi
+        securityContext:
+          runAsUser: 1000
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
