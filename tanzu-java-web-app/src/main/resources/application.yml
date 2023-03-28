@@ -16,11 +16,11 @@ server:
     enabled: true
     key-store-type: PKCS12
     # The path to the keystore containing the certificate
-    key-store: "classpath:keystore/secure-server-workloads.p12"
+    key-store: "classpath:keystore/keystore.p12"
     # The password used to generate the certificate
-    key-store-password: s3cure
+    key-store-password: password123
     # The alias mapped to the certificate
-    key-alias: secure-server-workloads
+    key-alias: 1
 
 #HTTP port
 # http:
