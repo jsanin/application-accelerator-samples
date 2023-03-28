@@ -1,0 +1,25 @@
+spec:
+  template:
+    spec:
+      containers:
+          livenessProbe:
+            httpGet:
+              scheme: HTTPS
+          readinessProbe:
+            httpGet:
+              scheme: HTTPS
+
+
+kubectl patch deploy/tanzu-java-web-app-https --namespace default --type merge \
+--patch '{"spec": {"template": {"spec": {"containers": {"livenessProbe": {"httpGet": {"scheme": "HTTPS"}},"readinessProbe": {"httpGet": {"scheme": "HTTPS"}}}}}}}'
+
+kubectl patch deploy/tanzu-java-web-app-https --namespace default --type "json" -p '[
+  {"op":"replace","path":"/spec/template/spec/containers/0/livenessProbe/httpGet/scheme","value":"HTTPS"},
+  {"op":"replace","path":"/spec/template/spec/containers/0/readinessProbe/httpGet/scheme","value":"HTTPS"}
+  ]'
+  
+  
+kubectl patch configmap/config-network \
+--namespace knative-serving \
+--type merge \
+--patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'
