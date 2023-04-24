@@ -1,0 +1,24 @@
+# to install trust manager see:https://cert-manager.io/docs/projects/trust-manager/#installation
+# Although, since cert-manager is already installed, only use  these two commands.
+# helm repo add jetstack https://charts.jetstack.io --force-update
+# helm upgrade -i -n cert-manager trust-manager jetstack/trust-manager --wait
+apiVersion: trust.cert-manager.io/v1alpha1
+kind: Bundle
+metadata:
+  name: tap-ingress-selfsigned-root-ca-bundle
+  namespace: cert-manager
+spec:
+  sources:
+#    - useDefaultCAs: true
+    - secret:
+        name: "tap-ingress-selfsigned-root-ca"
+        key: "ca.crt"
+  target:
+    configMap:
+      key: "trust-bundle.pem"
+    namespaceSelector:
+      matchLabels:
+        trust-bundle.apps.tanzu.vmware.com/inject: "enabled"
+
+#  Now label the namespace like so:
+#  kubectl label namespace default trust-bundle.apps.tanzu.vmware.com/inject=enabled

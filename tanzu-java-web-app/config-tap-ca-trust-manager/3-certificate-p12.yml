@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: java-app-keystore-password-2
+  namespace: default
+data:
+  password: cGFzc3dvcmQxMjM= # "password123"
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: certificate-for-secure-server-wrkld-2
+  namespace: default
+spec:
+  commonName: secure-server-wrkld-2
+  dnsNames:
+    - secure-server-wrkld-2
+    - test.domain.com
+  secretName: secure-server-wrkld-2-from-ca
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  keystores:
+    pkcs12:
+      create: true
+      passwordSecretRef:
+        name: java-app-keystore-password-2
+        key: password
+  issuerRef:
+    name: tap-ingress-selfsigned
+    kind: ClusterIssuer
+    group: cert-manager.io

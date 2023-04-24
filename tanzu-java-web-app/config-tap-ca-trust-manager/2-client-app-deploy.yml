@@ -1,0 +1,141 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ca-certificate-binding-type
+  namespace: default
+data:
+  type: |
+    ca-certificates
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: run
+    apps.tanzu.vmware.com/workload-type: server
+    carto.run/workload-name: client-app-tap-ingress-ca
+  name: client-app-tap-ingress-ca
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/component: run
+      apps.tanzu.vmware.com/workload-type: server
+      carto.run/workload-name: client-app-tap-ingress-ca
+  template:
+    metadata:
+      annotations:
+        boot.spring.io/version: 2.7.8
+        developer.conventions/target-containers: workload
+      labels:
+        app.kubernetes.io/component: run
+        apps.tanzu.vmware.com/workload-type: server
+        carto.run/workload-name: client-app-tap-ingress-ca
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1000
+      volumes:
+#        - name: root-secret-volume
+#          secret:
+#            secretName: root-secret
+#            items:
+#              - key: ca.crt
+#                path: ca.crt
+        - name: ca-cert-1
+          emptyDir: {}
+        - name: tap-ingress-selfsigned-root-ca-bundle-volume
+          configMap:
+            name: tap-ingress-selfsigned-root-ca-bundle
+        - name: ca-certificate-binding-type-volume
+          configMap:
+            name: ca-certificate-binding-type
+#            items:
+#              - key: type
+#                path: type
+#              - key: ca.crt
+#                path: ca.crt
+      containers:
+      - env:
+        - name: SERVICE_BINDING_ROOT
+          value: /bindings
+        - name: BP_DEBUG
+          value: "true"
+        - name: SERVER_APP_URL
+          value: https://secure-server-wrkld-2:8443
+        - name: JAVA_TOOL_OPTIONS
+          value: -Dmanagement.endpoint.health.probes.add-additional-paths="true" -Dmanagement.health.probes.enabled="true"
+            -Dserver.port="8080" -Dserver.shutdown.grace-period="24s"
+        image: dev.registry.tanzu.vmware.com/serverless/jsanin/supply-chain/client-app-tls-val-wrkld-default@sha256:afa3e98ac9a7bd9062e9929135a96cc2350d31dcd78a5b98883fe04f1529f6f6
+        volumeMounts:
+          - name: ca-cert-1
+            mountPath: "/bindings/ca-cert-1"
+          - name: ca-certificate-binding-type-volume
+            readOnly: true
+            mountPath: "/bindings/ca-cert-1/type"
+            subPath: "type"
+          - name: tap-ingress-selfsigned-root-ca-bundle-volume
+            readOnly: true
+            mountPath: "/bindings/ca-cert-1/ca.crt"
+            subPath: "trust-bundle.pem"
+#          - name: root-secret-volume
+#            readOnly: true
+#            mountPath: "/bindings/ca-certificates"
+#          - name: ca-certificate-binding-type-volume
+#            readOnly: true
+#            mountPath: "/usr/local/share/ca-certificates"
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /livez
+            port: 8080
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        name: workload
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /readyz
+            port: 8080
+            scheme: HTTP
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1500Mi
+          requests:
+            cpu: 500m
+            memory: 250Mi
+        securityContext:
+          runAsUser: 1000
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: run
+    apps.tanzu.vmware.com/workload-type: server
+    carto.run/workload-name: client-app-tap-ingress-ca
+  name: client-app-tap-ingress-ca
+  namespace: default
+spec:
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/component: run
+    apps.tanzu.vmware.com/workload-type: server
+    carto.run/workload-name: client-app-tap-ingress-ca
+  type: ClusterIP

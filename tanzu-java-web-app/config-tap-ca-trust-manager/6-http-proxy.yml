@@ -1,0 +1,18 @@
+# httpproxy-example.yaml
+apiVersion: projectcontour.io/v1
+kind: HTTPProxy
+metadata:
+  name: secure-server-wrkld-2
+  namespace: default
+spec:
+  virtualhost:
+    fqdn: secure-server-wrkld-2.jsanin.tanzu.biz
+    tls:
+      secretName: secure-server-wrkld-2-external-secret
+  routes:
+    - services:
+        - name: secure-server-wrkld-2
+          port: 8443
+          validation:
+            caSecret: secure-server-wrkld-2-from-ca
+            subjectName: secure-server-wrkld-2
